@@ -39,9 +39,7 @@ class InvoicePayments extends Controller
 
         $currencies = Currency::enabled()->orderBy('name')->pluck('name', 'code')->toArray();
 
-        $account_currency_code = Account::where('id', setting('general.default_account'))->pluck('currency_code')->first();
-
-        $currency = Currency::where('code', $account_currency_code)->first();
+        $currency = Currency::where('code', $invoice->currency_code)->first();
 
         $payment_methods = Modules::getPaymentMethods();
 
@@ -52,13 +50,15 @@ class InvoicePayments extends Controller
             $invoice->{$invoice_total->code} = $invoice_total->amount;
         }
 
-        $invoice->grand_total = $invoice->total;
+        $total = money($invoice->total, $currency->code, true)->format();
+
+        $invoice->grand_total = money($total, $currency->code)->getAmount();
 
         if (!empty($paid)) {
             $invoice->grand_total = $invoice->total - $paid;
         }
 
-        $html = view('modals.invoices.payment', compact('invoice', 'accounts', 'account_currency_code', 'currencies', 'currency', 'payment_methods'))->render();
+        $html = view('modals.invoices.payment', compact('invoice', 'accounts', 'currencies', 'currency', 'payment_methods'))->render();
 
         return response()->json([
             'success' => true,
@@ -147,7 +147,7 @@ class InvoicePayments extends Controller
                 $error_amount = (double) $convert_amount->getDynamicConvertedAmount();
             }
 
-            $message = trans('messages.error.over_payment', ['amount' => money($error_amount, $request['currency_code'],true)]);
+            $message = trans('messages.error.over_payment', ['amount' => money($error_amount, $request['currency_code'], true)]);
 
             return response()->json([
                 'success' => false,

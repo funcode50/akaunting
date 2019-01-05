@@ -39,26 +39,26 @@ class BillPayments extends Controller
 
         $currencies = Currency::enabled()->orderBy('name')->pluck('name', 'code')->toArray();
 
-        $currency = Currency::where('code', setting('general.default_currency'))->first();
-
-        $account_currency_code = Account::where('id', setting('general.default_account'))->pluck('currency_code')->first();
+        $currency = Currency::where('code', $bill->currency_code)->first();
 
         $payment_methods = Modules::getPaymentMethods();
 
-        $bill->paid = $this->getPaid($bill);
+        $paid = $this->getPaid($bill);
 
         // Get Bill Totals
         foreach ($bill->totals as $bill_total) {
             $bill->{$bill_total->code} = $bill_total->amount;
         }
 
-        $bill->grand_total = $bill->total;
+        $total = money($bill->total, $currency->code, true)->format();
+
+        $bill->grand_total = money($total, $currency->code)->getAmount();
 
         if (!empty($paid)) {
             $bill->grand_total = $bill->total - $paid;
         }
 
-        $html = view('modals.bills.payment', compact('bill', 'accounts', 'account_currency_code', 'currencies', 'currency', 'payment_methods'))->render();
+        $html = view('modals.bills.payment', compact('bill', 'accounts', 'currencies', 'currency', 'payment_methods'))->render();
 
         return response()->json([
             'success' => true,

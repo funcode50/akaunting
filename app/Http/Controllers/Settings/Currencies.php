@@ -162,7 +162,7 @@ class Currencies extends Controller
 
             return redirect('settings/currencies');
         } else {
-            $message = trans('messages.warning.disabled', ['name' => $currency->name, 'text' => implode(', ', $relationships)]);
+            $message = trans('messages.warning.disable_code', ['name' => $currency->name, 'text' => implode(', ', $relationships)]);
 
             flash($message)->warning();
 
@@ -222,8 +222,6 @@ class Currencies extends Controller
             $message = trans('messages.warning.disabled', ['name' => $currency->name, 'text' => implode(', ', $relationships)]);
 
             flash($message)->warning();
-
-            return redirect()->route('currencies.index');
         }
 
         return redirect()->route('currencies.index');
